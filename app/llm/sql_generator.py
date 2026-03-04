@@ -4,7 +4,7 @@ from app.config import GEMINI_API_KEY
 import time
 
 sql_cache = {}
-last_call_time = 0
+last_call = 0
 
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash",
@@ -13,7 +13,7 @@ llm = ChatGoogleGenerativeAI(
 )
 
 template = """
-You are a SQL generator.
+You are a PostgreSQL SQL generator.
 
 Table: public.sales_daily
 
@@ -26,9 +26,10 @@ orders
 created_at
 
 Rules:
-- Return ONLY a PostgreSQL SELECT query.
-- No explanations.
-- No markdown.
+- Output ONLY a SQL SELECT query
+- No explanations
+- No markdown
+- Always reference public.sales_daily
 
 Question:
 {question}
@@ -41,17 +42,21 @@ prompt = PromptTemplate(
 
 
 def generate_sql(question):
-    global last_call_time
+
+    global last_call
 
     if question in sql_cache:
         return sql_cache[question]
 
-    if time.time() - last_call_time < 2:
-        time.sleep(2)
+    if time.time() - last_call < 1:
+        time.sleep(1)
 
     chain = prompt | llm
-    response = chain.invoke({"question": question})
-    sql = response.content.strip()
+    result = chain.invoke({"question": question})
+
+    sql = result.content.strip()
+
     sql_cache[question] = sql
-    last_call_time = time.time()
+    last_call = time.time()
+
     return sql
