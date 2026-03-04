@@ -1,6 +1,15 @@
-import google.generativeai as genai
+import os
+from dotenv import load_dotenv
+from langchain_google_genai import ChatGoogleGenerativeAI
 
-genai.configure(api_key="AIzaSyCcJH6gMnE9scKHSTKfGafCzYErNKuHx9I")
-model = genai.GenerativeModel("gemini-2.5-flash")
-response = model.generate_content("Say hello world")
-print(response.text)
+load_dotenv()
+os.environ["GOOGLE_API_KEY"] = os.getenv("GEMINI_API_KEY")
+
+llm = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash",
+    temperature=0
+)
+
+response = llm.invoke("Say hello")
+
+print(response.content)

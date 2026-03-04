@@ -1,14 +1,15 @@
+import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from app.config import GEMINI_API_KEY
 
+# expose key to langchain/google sdk
+os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
 
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash",
-    google_api_key=GEMINI_API_KEY,
     temperature=0
 )
-
 
 template = """
 You are a SQL generator.
@@ -32,12 +33,10 @@ Question:
 {question}
 """
 
-
 prompt = PromptTemplate(
     input_variables=["question"],
     template=template
 )
-
 
 def generate_sql(question):
     chain = prompt | llm
