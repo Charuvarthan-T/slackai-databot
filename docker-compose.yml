@@ -1,26 +1,13 @@
-# Docker Compose file for slackai-databot
-version: '3.8'
+version: "3.9"
+
 services:
-  db:
+
+  postgres:
     image: postgres:15
+    container_name: slack-ai-postgres
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: slackai
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: analytics
     ports:
-      - "5432:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
-      - ./scripts/seed_db.sql:/docker-entrypoint-initdb.d/seed_db.sql
-  app:
-    build: ./app
-    environment:
-      - ENV_FILE=.env
-    depends_on:
-      - db
-    volumes:
-      - ./app:/app
-    ports:
-      - "8000:8000"
-volumes:
-  db_data:
+      - "5433:5432"
