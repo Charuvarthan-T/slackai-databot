@@ -1,13 +1,14 @@
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
-from app.config import GROK_API_KEY
+from app.config import GEMINI_API_KEY
 
 
-llm = ChatOpenAI(
-    api_key=GROK_API_KEY,
-    base_url="https://api.x.ai/v1",
-    model="grok-2-latest"
+llm = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash",
+    google_api_key=GEMINI_API_KEY,
+    temperature=0
 )
+
 
 template = """
 You are a SQL generator.
@@ -22,7 +23,10 @@ revenue
 orders
 created_at
 
-Return ONLY a PostgreSQL SELECT query.
+Rules:
+- Return ONLY a PostgreSQL SELECT query.
+- No explanations.
+- No markdown.
 
 Question:
 {question}

@@ -1,10 +1,15 @@
 import psycopg
-from app.config import POSTGRES_HOST, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
-import os
+from app.config import (
+    POSTGRES_HOST,
+    POSTGRES_DB,
+    POSTGRES_USER,
+    POSTGRES_PASSWORD,
+    POSTGRES_PORT
+)
 
-POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
 
-def run_query(sql: str):
+def run_query(sql):
+
     conn = psycopg.connect(
         host=POSTGRES_HOST,
         port=POSTGRES_PORT,
@@ -13,16 +18,10 @@ def run_query(sql: str):
         password=POSTGRES_PASSWORD
     )
 
-    with conn:
-        with conn.cursor() as cur:
-            cur.execute(sql)
-            try:
-                rows = cur.fetchall()
-            except psycopg.ProgrammingError:
-                rows = []
+    cur = conn.cursor()
+    cur.execute(sql)
+    rows = cur.fetchall()
+    cur.close()
     conn.close()
+
     return rows
-
-
-def test_connection():
-    return run_query("SELECT region, SUM(revenue) FROM sales_daily GROUP BY region;")
