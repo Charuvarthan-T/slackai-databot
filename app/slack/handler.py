@@ -4,6 +4,7 @@ from app.db.postgres import run_query
 
 router = APIRouter(prefix="/slack")
 
+
 @router.post("/ask-data")
 async def ask_data(request: Request):
     form = await request.form()
@@ -12,7 +13,6 @@ async def ask_data(request: Request):
 
     try:
         result = run_query(sql)
-
         return {
             "response_type": "in_channel",
             "text": f"SQL:\n```{sql}```\n\nResult:\n```{result}```"
