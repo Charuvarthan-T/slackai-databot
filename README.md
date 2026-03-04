@@ -1,235 +1,276 @@
-Slack AI Data Bot
+# Slack AI Data Bot
 
-A minimal Slack application that converts natural language questions into SQL queries, executes them on a PostgreSQL database, and returns the results directly inside Slack.
+A Slack-integrated analytics bot that converts natural language questions into SQL queries and returns database results — including formatted tables, CSV exports, and auto-generated charts — directly inside Slack.
 
-The system uses LangChain for NL → SQL translation, enabling non-technical users to query structured data using plain English.
+---
 
-System Overview
+## Table of Contents
 
-The bot works through a Slack slash command that sends the user’s question to a backend service. The backend uses LangChain to generate SQL, runs the query on Postgres, and sends the results back to Slack.
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Setup & Installation](#setup--installation)
+- [Configuration](#configuration)
+- [Running the Application](#running-the-application)
+- [Slack Configuration](#slack-configuration)
+- [Usage](#usage)
+- [How It Works](#how-it-works)
+- [Screenshots](#screenshots)
 
-Pipeline
+---
 
+## Overview
+
+Users run a single Slack slash command (`/ask-data`) with a plain English question. The bot translates it into SQL using Google Gemini, executes it against a PostgreSQL database, and responds inside Slack with:
+
+- The generated SQL query
+- A formatted result table
+- A downloadable CSV export link
+- An auto-generated bar chart (for 2-column label + numeric results)
+
+---
+
+## Architecture
+
+```
 Slack User
-   │
-   ▼
-/ask-data "question"
-   │
-   ▼
-Slack API
-   │
-   ▼
-Backend Server (FastAPI / Node)
-   │
-   ▼
-LangChain NL → SQL
-   │
-   ▼
-PostgreSQL Database
-   │
-   ▼
-Query Results
-   │
-   ▼
-Slack Response
-Architecture
-Components
-Slack Slash Command
+    │
+    │  /ask-data <question>
+    ▼
+FastAPI (app/main.py)
+    │
+    ├──► LangChain + Gemini 2.5 Flash  →  SQL generation (SELECT only)
+    │         (app/llm/sql_generator.py)
+    │
+    ├──► SQL Safety Gate  →  Rejects non-SELECT queries
+    │
+    ├──► PostgreSQL Query Execution
+    │         (app/db/postgres.py)
+    │
+    └──► Slack Response Builder (app/slack/handler.py)
+              │
+              ├── Formatted result table (Slack blocks)
+              ├── CSV export link
+              └── Bar chart image (2-column results)
+```
 
-Receives the user query.
+---
 
-Example:
+## Features
 
-/ask-data "What were the top selling products last week?"
-Backend API
+- **Slack slash command** — `/ask-data` triggers the full pipeline
+- **Natural language to SQL** — Powered by Gemini 2.5 Flash via LangChain
+- **Prompt-constrained SQL generation** — Scoped to `public.sales_daily` schema
+- **SQL safety gate** — Rejects any non-`SELECT` query before execution
+- **PostgreSQL query execution** — Live analytics against a seeded database
+- **Result formatting** — Human-readable numeric formatting in Slack blocks
+- **CSV export** — Generates a downloadable CSV with a shareable link
+- **Auto bar chart** — Automatically renders a chart when the result has exactly 2 columns (label + numeric)
+- **Async/background processing** — Slash command responds immediately; result is posted asynchronously
+- **Static file hosting** — FastAPI serves chart images and CSV files via static routes
+- **Seed script** — Realistic `sales_daily` data included for local development
 
-Handles:
+---
 
-Slack request validation
+## Project Structure
 
-NL → SQL conversion
-
-Database query execution
-
-Response formatting
-
-LangChain
-
-Responsible for translating natural language into SQL.
-
-Example:
-
-Input:
-"What were the top selling products last week?"
-
-Generated SQL:
-SELECT product_name, SUM(sales)
-FROM orders
-WHERE order_date >= CURRENT_DATE - INTERVAL '7 days'
-GROUP BY product_name
-ORDER BY SUM(sales) DESC
-LIMIT 5;
-PostgreSQL
-
-Stores the dataset queried by the bot.
-
-Project Structure
-slack-ai-data-bot/
-
-backend/
-│
+```
+slackai-databot/
 ├── app/
-│   ├── main.py
-│   ├── slack_handler.py
-│   ├── sql_agent.py
-│   └── db.py
-│
+│   ├── main.py                  # FastAPI app entry point, static file mounts
+│   ├── slack/
+│   │   └── handler.py           # Slash command handler, Slack response builder
+│   ├── llm/
+│   │   └── sql_generator.py     # LangChain + Gemini SQL generation
+│   └── db/
+│       └── postgres.py          # PostgreSQL connection and query execution
+├── scripts/
+│   └── seed_db.sql              # Database seed with sample sales data
+├── docker-compose.yml           # PostgreSQL container setup
 ├── requirements.txt
-├── config.py
-│
-.env.example
-README.md
-Setup Instructions
-1. Clone Repository
-git clone https://github.com/YOUR_USERNAME/slack-ai-data-bot.git
-cd slack-ai-data-bot
-2. Create Environment File
+├── .env.example
+└── README.md
+```
 
-Create a .env file using the template.
+---
 
-cp .env.example .env
+## Prerequisites
 
-Fill in the required credentials.
+- Python 3.10+
+- Docker & Docker Compose
+- [ngrok](https://ngrok.com/) (for exposing the local server to Slack)
+- A [Slack App](https://api.slack.com/apps) with slash command permissions
+- A [Google Gemini API Key](https://aistudio.google.com/app/apikey)
 
-Example:
+---
 
-SLACK_BOT_TOKEN=
-SLACK_SIGNING_SECRET=
-OPENAI_API_KEY=
-DATABASE_URL=
-3. Install Dependencies
+## Setup & Installation
+
+### 1. Clone the repository
+
+```bash
+git clone <your-repo-url>
+cd slackai-databot
+```
+
+### 2. Create and activate a Python virtual environment
+
+```bash
+python -m venv .venv
+
+# Windows (PowerShell)
+.\.venv\Scripts\Activate.ps1
+
+# macOS / Linux
+source .venv/bin/activate
+```
+
+### 3. Install dependencies
+
+```bash
 pip install -r requirements.txt
-4. Run the Server
-uvicorn app.main:app --reload
+```
 
-The backend will start on:
+---
 
-http://localhost:8000
-Slack App Setup
+## Configuration
 
-Create a Slack App
+Create a `.env` file in the project root:
 
-Enable Slash Commands
+```env
+POSTGRES_HOST=localhost
+POSTGRES_DB=analytics
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_PORT=5433
 
-Add:
+GEMINI_API_KEY=your_gemini_api_key_here
+SLACK_SIGNING_SECRET=your_slack_signing_secret_here
+```
 
-/ask-data
+> **Note:** Never commit your `.env` file. Add it to `.gitignore`.
 
-Request URL:
+---
 
-https://your-server-url/slack/ask-data
-Example Usage
+## Running the Application
 
-User enters:
+### 1. Start PostgreSQL with Docker
 
-/ask-data "Show the top 5 customers by revenue"
+```bash
+docker-compose up -d
+```
 
-Bot responds:
+### 2. Seed the database
 
-Top Customers by Revenue
+**Option A — using a local `psql` client:**
 
-1. Customer A — $24,000
-2. Customer B — $19,200
-3. Customer C — $17,500
-4. Customer D — $15,900
-5. Customer E — $14,100
-Screenshots
-Slack Command Example
+```bash
+psql -h localhost -p 5433 -U postgres -d analytics -f scripts/seed_db.sql
+```
 
-(Add screenshot here)
+**Option B — using Docker exec:**
 
-docs/images/slack-command.png
+```bash
+docker exec -i slack-ai-postgres psql -U postgres -d analytics < scripts/seed_db.sql
+```
 
-Query Result in Slack
+### 3. Start the FastAPI server
 
-(Add screenshot here)
+```bash
+uvicorn app.main:app --reload --port 8000
+```
 
-docs/images/slack-response.png
+### 4. Expose the server publicly with ngrok
 
-System Architecture Diagram
+```bash
+ngrok http 8000
+```
 
-(Optional but recommended)
+Copy the generated `https://` URL and update the `NGROK_URL` constant in `app/slack/handler.py`:
 
-docs/images/architecture.png
+```python
+NGROK_URL = "https://<your-ngrok-subdomain>.ngrok.io"
+```
 
-Example SQL Generation
+> The ngrok URL is required so that Slack can reach your local server and users can download CSV/chart files.
 
-Natural Language:
+---
 
-"What were the highest revenue products last month?"
+## Slack Configuration
 
-Generated SQL:
+1. Go to [https://api.slack.com/apps](https://api.slack.com/apps) and open your app (or create one).
+2. Navigate to **Slash Commands** → **Create New Command**:
+   - **Command:** `/ask-data`
+   - **Request URL:** `https://<your-ngrok-url>/slack/ask-data`
+   - **Short Description:** Ask a data question in plain English
+3. Under **OAuth & Permissions**, ensure the `chat:write` and `commands` scopes are granted.
+4. Reinstall the app to your workspace if prompted.
+5. Copy the **Signing Secret** from **Basic Information** into your `.env`.
 
-SELECT product_name, SUM(revenue)
-FROM sales
-WHERE sale_date >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month'
-GROUP BY product_name
-ORDER BY SUM(revenue) DESC
-LIMIT 10;
-Assumptions
+---
 
-The LLM generates a single SQL query
+## Usage
 
-No SQL validation or guardrails are implemented
+In any Slack channel where the bot is present, type:
 
-The database schema is known to the LangChain agent
+```
+/ask-data show total revenue by region
+/ask-data which region has the lowest revenue?
+/ask-data what is the average revenue per category?
+/ask-data show all sales data
+```
 
-Queries are read-only
+The bot will reply with the generated SQL, the result table, a CSV export link, and a bar chart where applicable.
 
-Limitations
+### Safety Behavior
 
-No query sanitization
+Any query attempting to modify data will be blocked:
 
-No authentication layer
+```
+/ask-data delete all records
+→ "Unsafe request detected. Only read queries allowed."
+```
 
-No SQL safety checks
+---
 
-No multi-table reasoning optimizations
+## How It Works
 
-These can be added in future versions.
+1. **Slash command received** — FastAPI accepts the POST from Slack and immediately returns HTTP 200 to avoid timeout.
+2. **Background processing** — The query is handled asynchronously so Slack doesn't time out.
+3. **SQL generation** — LangChain passes the user's question and the `public.sales_daily` schema context to Gemini 2.5 Flash, which returns a `SELECT` statement.
+4. **Safety check** — The generated SQL is inspected; any non-`SELECT` statement is rejected and an error message is sent back to Slack.
+5. **Query execution** — The validated SQL runs against PostgreSQL and returns rows.
+6. **Response formatting** — Results are formatted into Slack `blocks` with numeric formatting applied to revenue/order columns.
+7. **CSV export** — Results are written to a temporary CSV file served at `/slack/export-csv?id=<uuid>`.
+8. **Chart generation** — If the result has exactly 2 columns where the second is numeric, a bar chart PNG is generated with `matplotlib` and served as a static file.
 
-Future Improvements
+---
 
-Possible extensions:
+## Database Schema
 
-SQL validation layer
+The bot is pre-configured to query the `public.sales_daily` table:
 
-Query cost estimation
+```sql
+CREATE TABLE public.sales_daily (
+    date        DATE,
+    region      TEXT,
+    category    TEXT,
+    revenue     NUMERIC,
+    orders      INTEGER,
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+```
 
-Schema-aware prompting
+Sample data covers regions (North, South, East, West) and categories (Electronics, Grocery, Fashion).
 
-Slack interactive blocks
+---
 
-Result visualization
+## Example Queries & Results
 
-Caching frequent queries
-
-Role-based access
-
-Tech Stack
-
-Backend
-
-Python
-
-FastAPI
-
-LangChain
-
-Database
-
-PostgreSQL
-
-Integration
-
-Slack API
+| Question | Generated SQL | Result |
+|---|---|---|
+| Show total revenue by region | `SELECT region, SUM(revenue) FROM public.sales_daily GROUP BY region` | North: 257,500.50 \| South: 54,000.00 \| ... |
+| Which region has the lowest revenue? | `SELECT region FROM public.sales_daily GROUP BY region ORDER BY SUM(revenue) ASC LIMIT 1` | South |
+| Average revenue per category | `SELECT category, AVG(revenue) FROM public.sales_daily GROUP BY category` | Electronics: 128,750.25 \| ... |
