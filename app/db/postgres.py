@@ -1,4 +1,4 @@
-import psycopg
+import psycopg2
 from app.config import (
     POSTGRES_HOST,
     POSTGRES_DB,
@@ -7,20 +7,22 @@ from app.config import (
     POSTGRES_PORT
 )
 
-
 def run_query(sql):
 
-    conn = psycopg.connect(
+    conn = psycopg2.connect(
         host=POSTGRES_HOST,
-        port=POSTGRES_PORT,
         dbname=POSTGRES_DB,
         user=POSTGRES_USER,
-        password=POSTGRES_PASSWORD
+        password=POSTGRES_PASSWORD,
+        port=POSTGRES_PORT
     )
 
     cur = conn.cursor()
+
     cur.execute(sql)
+
     rows = cur.fetchall()
+
     cur.close()
     conn.close()
 

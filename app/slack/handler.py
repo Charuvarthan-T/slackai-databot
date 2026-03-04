@@ -1,46 +1,80 @@
 from fastapi import APIRouter, Request, BackgroundTasks
-import requests
-import csv
-import io
-
 from app.llm.sql_generator import generate_sql
 from app.db.postgres import run_query
+import requests
+import uuid
+import csv
+import os
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 router = APIRouter(prefix="/slack")
 
+NGROK_URL = "https://overdestructively-shareable-dwayne.ngrok-free.dev"
 
-def format_result(rows):
+
+def format_rows(rows):
 
     if not rows:
-        return "No results found."
+        return "No results."
 
     formatted = ""
 
     for row in rows:
+        line = []
+        for value in row:
+            try:
+                value = float(value)
+                line.append(f"{value:,.2f}")
+            except:
+                line.append(str(value))
 
-        values = []
-
-        for v in row:
-
-            if hasattr(v, "quantize"):
-                values.append(f"{float(v):,.2f}")
-            else:
-                values.append(str(v))
-
-        formatted += " | ".join(values) + "\n"
+        formatted += " | ".join(line) + "\n"
 
     return formatted
 
 
 def generate_csv(rows):
 
-    output = io.StringIO()
-    writer = csv.writer(output)
+    filename = f"result_{uuid.uuid4().hex}.csv"
+    path = f"charts/{filename}"
 
-    for row in rows:
-        writer.writerow(row)
+    os.makedirs("charts", exist_ok=True)
 
-    return output.getvalue()
+    with open(path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerows(rows)
+
+    return f"{NGROK_URL}/{path}"
+
+
+def generate_chart(rows):
+
+    try:
+
+        if len(rows[0]) != 2:
+            return None
+
+        labels = [str(r[0]) for r in rows]
+        values = [float(r[1]) for r in rows]
+
+        plt.figure(figsize=(6,4))
+        plt.bar(labels, values)
+
+        os.makedirs("charts", exist_ok=True)
+
+        filename = f"chart_{uuid.uuid4().hex}.png"
+        path = f"charts/{filename}"
+
+        plt.savefig(path)
+        plt.close()
+
+        return f"{NGROK_URL}/{path}"
+
+    except:
+        return None
 
 
 def process_query(question, response_url):
@@ -50,59 +84,68 @@ def process_query(question, response_url):
         sql = generate_sql(question)
 
         if not sql.lower().startswith("select"):
-            raise Exception("Only SELECT queries allowed")
+            requests.post(response_url, json={
+                "response_type": "ephemeral",
+                "text": "Only SELECT queries allowed."
+            })
+            return
 
         rows = run_query(sql)
 
-        result = format_result(rows)
+        formatted = format_rows(rows)
 
-        csv_data = generate_csv(rows)
+        csv_url = generate_csv(rows)
 
-        requests.post(
-            response_url,
-            json={
-                "response_type": "in_channel",
-                "blocks": [
+        chart_url = generate_chart(rows)
+
+        blocks = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*SQL*\n```{sql}```"
+                }
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*Result*\n```{formatted}```"
+                }
+            },
+            {
+                "type": "actions",
+                "elements": [
                     {
-                        "type": "section",
+                        "type": "button",
                         "text": {
-                            "type": "mrkdwn",
-                            "text": f"*SQL*\n```{sql}```"
-                        }
-                    },
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": f"*Result*\n```{result}```"
-                        }
-                    },
-                    {
-                        "type": "actions",
-                        "elements": [
-                            {
-                                "type": "button",
-                                "text": {
-                                    "type": "plain_text",
-                                    "text": "Export CSV"
-                                },
-                                "url": "https://example.com"
-                            }
-                        ]
+                            "type": "plain_text",
+                            "text": "Export CSV"
+                        },
+                        "url": csv_url
                     }
                 ]
             }
-        )
+        ]
+
+        if chart_url:
+            blocks.append({
+                "type": "image",
+                "image_url": chart_url,
+                "alt_text": "chart"
+            })
+
+        requests.post(response_url, json={
+            "response_type": "in_channel",
+            "blocks": blocks
+        })
 
     except Exception as e:
 
-        requests.post(
-            response_url,
-            json={
-                "response_type": "ephemeral",
-                "text": f"Error\n```{str(e)}```"
-            }
-        )
+        requests.post(response_url, json={
+            "response_type": "ephemeral",
+            "text": f"Error:\n```{str(e)}```"
+        })
 
 
 @router.post("/ask-data")
@@ -112,13 +155,6 @@ async def ask_data(request: Request, background_tasks: BackgroundTasks):
 
     question = form.get("text")
     response_url = form.get("response_url")
-
-    if not question:
-
-        return {
-            "response_type": "ephemeral",
-            "text": "Please provide a query."
-        }
 
     background_tasks.add_task(process_query, question, response_url)
 
