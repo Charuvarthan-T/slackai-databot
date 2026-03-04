@@ -285,4 +285,3 @@ Sample data covers regions (North, South, East, West) and categories (Electronic
 ![Screenshot 4](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%205.15.18%20PM.jpeg)
 ![Screenshot 5](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%205.24.35%20PM.jpeg)
 ![Screenshot 6](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%205.43.57%20PM.jpeg)
-![Chart 1](./charts/chart_36a607b312e449e392a7e580a431c77a.png)
