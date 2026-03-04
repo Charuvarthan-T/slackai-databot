@@ -274,3 +274,18 @@ Sample data covers regions (North, South, East, West) and categories (Electronic
 | Show total revenue by region | `SELECT region, SUM(revenue) FROM public.sales_daily GROUP BY region` | North: 257,500.50 \| South: 54,000.00 \| ... |
 | Which region has the lowest revenue? | `SELECT region FROM public.sales_daily GROUP BY region ORDER BY SUM(revenue) ASC LIMIT 1` | South |
 | Average revenue per category | `SELECT category, AVG(revenue) FROM public.sales_daily GROUP BY category` | Electronics: 128,750.25 \| ... |
+
+---
+
+## Screenshots
+
+![Screenshot 1](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%204.49.32%20PM.jpeg)
+![Screenshot 2](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%204.50.44%20PM.jpeg)
+![Screenshot 3](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%204.51.30%20PM.jpeg)
+![Screenshot 4](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%205.15.18%20PM.jpeg)
+![Screenshot 5](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%205.24.35%20PM.jpeg)
+![Screenshot 6](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%205.43.57%20PM.jpeg)
+![Screenshot 7](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%205.44.07%20PM.jpeg)
+![Screenshot 8](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%205.44.45%20PM.jpeg)
+![Chart 1](./charts/chart_36a607b312e449e392a7e580a431c77a.png)
+![Chart 2](./charts/chart_4082c076fbcc45798e86bf929ba63fd8.png)
