@@ -48,16 +48,16 @@ Not currently implemented in this codebase:
 
 ## Features
 
-| Feature | Description |
-| --- | --- |
-| NL to SQL | Converts plain English questions into a single PostgreSQL `SELECT` query |
-| Query execution | Runs generated SQL against the PostgreSQL database |
-| Slack response blocks | Sends SQL and formatted result preview back to Slack |
-| CSV export | Generates a CSV file and exposes it through a Slack button |
-| Chart generation | Creates a bar chart PNG when the result has exactly 2 columns and the second column is numeric |
+| Feature               | Description                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------------------- |
+| NL to SQL             | Converts plain English questions into a single PostgreSQL `SELECT` query                     |
+| Query execution       | Runs generated SQL against the PostgreSQL database                                             |
+| Slack response blocks | Sends SQL and formatted result preview back to Slack                                           |
+| CSV export            | Generates a CSV file and exposes it through a Slack button                                     |
+| Chart generation      | Creates a bar chart PNG when the result has exactly 2 columns and the second column is numeric |
 | Background processing | Returns an immediate Slack acknowledgment and completes the query in a FastAPI background task |
-| Static file hosting | Serves generated CSV and PNG files from the `/charts` route |
-| Safety check | Rejects generated SQL that does not start with `SELECT` |
+| Static file hosting   | Serves generated CSV and PNG files from the `/charts` route                                  |
+| Safety check          | Rejects generated SQL that does not start with `SELECT`                                      |
 
 ## Architecture
 
@@ -152,28 +152,28 @@ slackai-databot/
 
 ## Prerequisites
 
-| Tool | Version |
-| --- | --- |
-| Python | 3.10+ |
-| Docker Desktop | Latest |
-| PostgreSQL | Provided through Docker Compose |
-| Git | Latest |
-| Slack App | Required for slash command setup |
-| ngrok | Required for exposing local FastAPI server to Slack |
+| Tool           | Version                                             |
+| -------------- | --------------------------------------------------- |
+| Python         | 3.10+                                               |
+| Docker Desktop | Latest                                              |
+| PostgreSQL     | Provided through Docker Compose                     |
+| Git            | Latest                                              |
+| Slack App      | Required for slash command setup                    |
+| ngrok          | Required for exposing local FastAPI server to Slack |
 
 ## Environment Variables
 
 Create a `.env` file in the project root.
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `POSTGRES_HOST` | Yes | PostgreSQL host |
-| `POSTGRES_DB` | Yes | Database name |
-| `POSTGRES_USER` | Yes | Database username |
-| `POSTGRES_PASSWORD` | Yes | Database password |
-| `POSTGRES_PORT` | Yes | PostgreSQL port |
-| `GEMINI_API_KEY` | Yes | Gemini API key used by LangChain |
-| `SLACK_SIGNING_SECRET` | Yes | Slack signing secret |
+| Variable                 | Required | Description                      |
+| ------------------------ | -------- | -------------------------------- |
+| `POSTGRES_HOST`        | Yes      | PostgreSQL host                  |
+| `POSTGRES_DB`          | Yes      | Database name                    |
+| `POSTGRES_USER`        | Yes      | Database username                |
+| `POSTGRES_PASSWORD`    | Yes      | Database password                |
+| `POSTGRES_PORT`        | Yes      | PostgreSQL port                  |
+| `GEMINI_API_KEY`       | Yes      | Gemini API key used by LangChain |
+| `SLACK_SIGNING_SECRET` | Yes      | Slack signing secret             |
 
 Example:
 
@@ -254,11 +254,11 @@ ngrok http 8000
 
 Use [https://api.slack.com/apps](https://api.slack.com/apps).
 
-| Section | Setting |
-| --- | --- |
-| Slash Commands | `/ask-data` -> `https://<ngrok-url>/slack/ask-data` |
-| OAuth Bot Scopes | `commands`, `chat:write` |
-| Install App | Install or reinstall to workspace |
+| Section          | Setting                                                 |
+| ---------------- | ------------------------------------------------------- |
+| Slash Commands   | `/ask-data` -> `https://<ngrok-url>/slack/ask-data` |
+| OAuth Bot Scopes | `commands`, `chat:write`                            |
+| Install App      | Install or reinstall to workspace                       |
 
 Setup steps:
 
@@ -271,10 +271,10 @@ Setup steps:
 
 ## API Endpoints
 
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `POST` | `/slack/ask-data` | Receives the Slack slash command, schedules background processing, and returns an immediate acknowledgment |
-| `GET` | `/charts/<generated-file>` | Serves generated CSV and chart files through FastAPI static hosting |
+| Method   | Endpoint                     | Purpose                                                                                                    |
+| -------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `POST` | `/slack/ask-data`          | Receives the Slack slash command, schedules background processing, and returns an immediate acknowledgment |
+| `GET`  | `/charts/<generated-file>` | Serves generated CSV and chart files through FastAPI static hosting                                        |
 
 ### `/slack/ask-data` request flow
 
@@ -331,18 +331,18 @@ Typical result behavior:
 ![Screenshot 4](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%205.15.18%20PM.jpeg)
 ![Screenshot 5](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%205.24.35%20PM.jpeg)
 ![Screenshot 6](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%205.43.57%20PM.jpeg)
-![Chart 1](./charts/chart_36a607b312e449e392a7e580a431c77a.png)
+![1772779136114](image/README/1772779136114.png)
 
 ## Troubleshooting
 
-| Issue | Likely Cause | Fix |
-| --- | --- | --- |
-| Slack shows a timeout warning | The server did not return quickly enough | Keep the immediate acknowledgment path intact and ensure background task execution is used |
-| CSV or chart link does not open | `NGROK_URL` is stale or incorrect | Update `NGROK_URL` in `app/slack/handler.py` and restart the server |
-| Gemini SQL generation fails | Invalid or missing `GEMINI_API_KEY` | Verify `.env`, restart the app, and confirm the key is active |
-| Database connection fails | PostgreSQL container is not running or env values are wrong | Check `docker-compose`, confirm port `5433`, and verify `.env` values |
-| Query returns no results | Seed data not loaded or query conditions do not match sample data | Re-run `scripts/seed_db.sql` and test with simpler aggregate queries |
-| Only SELECT queries are allowed error | Generated SQL did not begin with `SELECT` | Tighten the prompt or simplify the question asked in Slack |
+| Issue                                 | Likely Cause                                                      | Fix                                                                                        |
+| ------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Slack shows a timeout warning         | The server did not return quickly enough                          | Keep the immediate acknowledgment path intact and ensure background task execution is used |
+| CSV or chart link does not open       | `NGROK_URL` is stale or incorrect                               | Update `NGROK_URL` in `app/slack/handler.py` and restart the server                    |
+| Gemini SQL generation fails           | Invalid or missing `GEMINI_API_KEY`                             | Verify `.env`, restart the app, and confirm the key is active                            |
+| Database connection fails             | PostgreSQL container is not running or env values are wrong       | Check `docker-compose`, confirm port `5433`, and verify `.env` values                |
+| Query returns no results              | Seed data not loaded or query conditions do not match sample data | Re-run `scripts/seed_db.sql` and test with simpler aggregate queries                     |
+| Only SELECT queries are allowed error | Generated SQL did not begin with `SELECT`                       | Tighten the prompt or simplify the question asked in Slack                                 |
 
 ## License
 
