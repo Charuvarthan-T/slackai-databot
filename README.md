@@ -331,7 +331,7 @@ Typical result behavior:
 ![Screenshot 4](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%205.15.18%20PM.jpeg)
 ![Screenshot 5](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%205.24.35%20PM.jpeg)
 ![Screenshot 6](./assets/screenshots/WhatsApp%20Image%202026-03-04%20at%205.43.57%20PM.jpeg)
-![1772779136114](image/README/1772779136114.png)
+![Chart 1](./charts/chart_4082c076fbcc45798e86bf929ba63fd8.png)
 
 ## Troubleshooting
 
