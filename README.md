@@ -40,10 +40,6 @@ Current implementation scope in this repository:
 - PostgreSQL query execution
 - CSV export and chart image generation
 
-Not currently implemented in this codebase:
-
-- Scheduled reports
-- n8n workflow integration
 
 ## Features
 
