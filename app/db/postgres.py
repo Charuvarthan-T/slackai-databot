@@ -1,4 +1,4 @@
-import psycopg2
+import psycopg
 from app.config import (
     POSTGRES_HOST,
     POSTGRES_DB,
@@ -9,7 +9,7 @@ from app.config import (
 
 def run_query(sql):
 
-    conn = psycopg2.connect(
+    conn = psycopg.connect(
         host=POSTGRES_HOST,
         dbname=POSTGRES_DB,
         user=POSTGRES_USER,
