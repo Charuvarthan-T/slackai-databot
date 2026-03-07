@@ -44,7 +44,6 @@ Not currently implemented in this codebase:
 
 - Scheduled reports
 - n8n workflow integration
-- LRU cache for repeated prompts
 
 ## Features
 
@@ -58,6 +57,7 @@ Not currently implemented in this codebase:
 | Background processing | Returns an immediate Slack acknowledgment and completes the query in a FastAPI background task |
 | Static file hosting   | Serves generated CSV and PNG files from the `/charts` route                                  |
 | Safety check          | Rejects generated SQL that does not start with `SELECT`                                      |
+| SQL prompt caching    | Uses an in-memory TTL + LRU cache for repeated natural-language questions                      |
 
 ## Architecture
 
@@ -174,6 +174,8 @@ Create a `.env` file in the project root.
 | `POSTGRES_PORT`        | Yes      | PostgreSQL port                  |
 | `GEMINI_API_KEY`       | Yes      | Gemini API key used by LangChain |
 | `SLACK_SIGNING_SECRET` | Yes      | Slack signing secret             |
+| `SQL_CACHE_MAX_SIZE`   | No       | Max in-memory SQL cache entries, default `200` |
+| `SQL_CACHE_TTL_SECONDS`| No       | Cache entry lifetime in seconds, default `1800` |
 
 Example:
 
@@ -185,12 +187,15 @@ POSTGRES_PASSWORD=postgres
 POSTGRES_PORT=5433
 GEMINI_API_KEY=your_gemini_api_key_here
 SLACK_SIGNING_SECRET=your_slack_signing_secret_here
+SQL_CACHE_MAX_SIZE=200
+SQL_CACHE_TTL_SECONDS=1800
 ```
 
 Note:
 
 - The current code reads `SLACK_SIGNING_SECRET` but does not yet validate Slack request signatures.
 - The public base URL used for CSV/chart links is currently hardcoded as `NGROK_URL` in `app/slack/handler.py`.
+- SQL generation responses are cached in memory per app instance, keyed by normalized question text.
 
 ## Local Setup
 
